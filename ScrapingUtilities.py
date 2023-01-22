@@ -9,9 +9,10 @@ import requests as re
 from bs4 import BeautifulSoup
 import bs4
 import pandas as pd
+import time
 
 
-def decode_announcement_imobiliare_selenium(dwelling_element: WebElement):
+def decode_announcement_imobiliare_selenium(dwelling_element: WebElement):  # Not updated
     dwelling = dict()
     dwelling["data_integrity"] = True
     if dwelling_element.get_attribute("class") == "box-anunt proiect standard":
@@ -73,32 +74,44 @@ def decode_announcement_imobiliare_selenium(dwelling_element: WebElement):
 
 def decode_announcement_imobiliare_beautiful(dwelling_element: bs4.element.Tag):
     dwelling = dict()
-    attribute_dictionary = dwelling_element.attrs
+    element_attribute_dictionary = dwelling_element.attrs
 
-    if len(attribute_dictionary["class"]) != 1:
+    if len(element_attribute_dictionary["class"]) != 1:
         dwelling["data_integrity"] = False
         return dwelling
 
-    dwelling["pret"] = attribute_dictionary["data-price"]
+    if "data-price" in element_attribute_dictionary.keys():
+        dwelling["pret"] = element_attribute_dictionary["data-price"]
+    else:
+        dwelling["data_integrity"] = False
+        return dwelling
 
     caracteristici = dwelling_element.find(class_="swiper-wrapper").find_all(class_="caracteristica")
-    dwelling["suprafata"] = " ".join(caracteristici[1].find('span').text.split()).split()[0]
+    if len(caracteristici) < 3:
+        dwelling["data_integrity"] = False
+        return dwelling
+
+    if "mp" in " ".join(caracteristici[1].find('span').text.split()):
+        dwelling["suprafata"] = " ".join(caracteristici[1].find('span').text.split()).split()[0]
+    else:
+        dwelling["data_integrity"] = False
+        return dwelling
 
     dwelling["etaj"] = " ".join(caracteristici[2].find('span').text.split())
     if len(caracteristici) > 3:
         dwelling["partajare"] = " ".join(caracteristici[3].find('span').text.split())
     else:
         dwelling["partajare"] = "Not specified"
-    dwelling["noCamere"] = attribute_dictionary["data-camere"]
-    dwelling["type"] = attribute_dictionary["data-name"]
+    dwelling["noCamere"] = element_attribute_dictionary["data-camere"]
+    dwelling["type"] = element_attribute_dictionary["data-name"]
 
-    dwelling["judet"] = attribute_dictionary["data-judet"]
+    dwelling["judet"] = element_attribute_dictionary["data-judet"]
     locatie = " ".join(dwelling_element.find(class_="location_txt").text.split("\n")[2].split())
     if "," in locatie:
-        dwelling["oras"] = locatie.split(",")[0]
-        dwelling["zona"] = locatie.split(",")[1].replace("ş", "s").replace("ă", "a").replace("Î", "I").replace("â","a")
+        dwelling["oras"] = locatie.split(",")[0].replace("ş", "s").replace("ă", "a").replace("Î", "I").replace("â", "a").replace("ţ", "t")
+        dwelling["zona"] = locatie.split(",")[1].replace("ş", "s").replace("ă", "a").replace("Î", "I").replace("â", "a").replace("ţ", "t")
     else:
-        dwelling["oras"] = locatie
+        dwelling["oras"] = locatie.replace("ş", "s").replace("ă", "a").replace("Î", "I").replace("â", "a").replace("ţ", "t")
         dwelling["zona"] = "Nan"
 
     if len(dwelling_element.find(class_="comision").text.split("\n")) == 3:
@@ -112,8 +125,10 @@ def decode_announcement_imobiliare_beautiful(dwelling_element: bs4.element.Tag):
         dwelling["tva"] = "No"
 
     dwelling["anunt"] = dwelling_element.find(class_="titlu-anunt").text.split("\n")[1]
-    dwelling["internalID"] = attribute_dictionary["id"]
+    dwelling["internalID"] = element_attribute_dictionary["id"]
     dwelling["data_integrity"] = True
+
+    dwelling["pert_pe_mp"] = int(1000*float(dwelling["pret"])/float(dwelling["suprafata"]))
 
     return dwelling
 
@@ -126,7 +141,7 @@ def run_page_selenium(page_no):
     listings = local_driver.find_elements(By.CLASS_NAME, "box-anunt")
     for listing in listings:
         apartment_dict = decode_announcement_imobiliare_selenium(listing)
-        #print(apartment_dict)
+        # print(apartment_dict)
         if apartment_dict["data_integrity"]:
             df_dictionary = pd.DataFrame([apartment_dict])
             local_dataframe = pd.concat([local_dataframe, df_dictionary], ignore_index=True)
@@ -134,17 +149,18 @@ def run_page_selenium(page_no):
     return local_dataframe
 
 
-def run_page_beautifulsoup(page_no):
+def run_page_beautifulsoup(city, page_no):
     local_dataframe = pd.DataFrame()
-    url = "https://www.imobiliare.ro/vanzare-apartamente/cluj-napoca?pagina={}".format(page_no)
+    url = "https://www.imobiliare.ro/vanzare-apartamente/{}pagina={}".format(city, page_no)
     page_html = re.get(url)
-    page_soup = BeautifulSoup(page_html.content, 'html.parser')
-    listings = page_soup.find_all(class_="box-anunt")
+    page_souped = BeautifulSoup(page_html.content, 'html.parser')
+    listings = page_souped.find_all(class_="box-anunt")
     for listing in listings:
         apartment_dict = decode_announcement_imobiliare_beautiful(listing)
         if apartment_dict["data_integrity"]:
             df_dictionary = pd.DataFrame([apartment_dict])
             local_dataframe = pd.concat([local_dataframe, df_dictionary], ignore_index=True)
+    time.sleep(.5)
     return local_dataframe
 
 
@@ -164,10 +180,6 @@ if __name__ == "__main__":
     #     if result["data_integrity"]:
     #         print(result["pret"])
 
-
     # result = decode_announcement_imobiliare_beautiful(anunturi[0])
     # for element in result:
     #     print(element+":", result[element])
-
-
-
