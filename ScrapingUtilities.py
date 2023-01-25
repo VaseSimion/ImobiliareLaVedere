@@ -128,7 +128,7 @@ def decode_announcement_imobiliare_beautiful(dwelling_element: bs4.element.Tag):
     dwelling["internalID"] = element_attribute_dictionary["id"]
     dwelling["data_integrity"] = True
 
-    dwelling["pert_pe_mp"] = int(1000*float(dwelling["pret"])/float(dwelling["suprafata"]))
+    dwelling["pret_pe_mp"] = int(1000*float(dwelling["pret"])/float(dwelling["suprafata"]))
 
     return dwelling
 
