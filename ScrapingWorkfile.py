@@ -46,7 +46,7 @@ def run_it_all():
             #     result = Su.run_page_beautifulsoup(city, i)
             #     complete_dataframe = pd.concat([result, complete_dataframe], ignore_index=True)
             #     print(f"{(time.time() - start_time):.2f} seconds")
-        complete_dataframe.to_csv("Reports/" + datetime.datetime.now().strftime("%d-%m-%Y") + ".csv", index=False)
+        complete_dataframe.to_csv("Reports/" + datetime.datetime.now().strftime("%m-%d-%Y") + ".csv", index=False)
     except:
         run_it_all()
 

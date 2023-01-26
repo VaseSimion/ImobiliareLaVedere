@@ -160,7 +160,7 @@ def run_page_beautifulsoup(city, page_no):
         if apartment_dict["data_integrity"]:
             df_dictionary = pd.DataFrame([apartment_dict])
             local_dataframe = pd.concat([local_dataframe, df_dictionary], ignore_index=True)
-    time.sleep(.5)
+    time.sleep(2)
     return local_dataframe
 
 
