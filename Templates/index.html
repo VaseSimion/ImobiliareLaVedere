@@ -1,0 +1,16 @@
+<form action="{{url_for('show_graph')}}" method="get">
+    <label for="city">City:</label>
+    <select name="city" id="city">
+        {% for city in cities %}
+            <option value="{{city}}">{{city}}</option>
+        {% endfor %}
+    </select>
+<!--    <label for="zone">Zone:</label>
+    <select name="zone" id="zone">
+        {% for zone in zones %}
+            <option value="{{zone}}">{{zone}}</option>
+        {% endfor %}
+    </select>
+    -->
+    <input type="submit" value="Show graph">
+</form>
