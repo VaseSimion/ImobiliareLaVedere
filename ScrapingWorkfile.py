@@ -1,5 +1,4 @@
 import ScrapingUtilities as Su
-import time
 from concurrent.futures import ThreadPoolExecutor
 import requests as re
 from bs4 import BeautifulSoup
@@ -34,7 +33,7 @@ def run_it_all():
                 pagina_max = int(attribute_dictionary["data-pagina"])
 
             with ThreadPoolExecutor(max_workers=100) as p:
-                start_time = time.time()
+                # start_time = time.time()
                 results = p.map(Su.run_page_beautifulsoup, [city+"&"]*pagina_max, range(1, pagina_max+1))
                 for result in results:
                     complete_dataframe = pd.concat([result, complete_dataframe], ignore_index=True)

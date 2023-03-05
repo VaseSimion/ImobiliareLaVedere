@@ -150,18 +150,22 @@ def run_page_selenium(page_no):
 
 
 def run_page_beautifulsoup(city, page_no):
-    local_dataframe = pd.DataFrame()
-    url = "https://www.imobiliare.ro/vanzare-apartamente/{}pagina={}".format(city, page_no)
-    page_html = re.get(url)
-    page_souped = BeautifulSoup(page_html.content, 'html.parser')
-    listings = page_souped.find_all(class_="box-anunt")
-    for listing in listings:
-        apartment_dict = decode_announcement_imobiliare_beautiful(listing)
-        if apartment_dict["data_integrity"]:
-            df_dictionary = pd.DataFrame([apartment_dict])
-            local_dataframe = pd.concat([local_dataframe, df_dictionary], ignore_index=True)
-    time.sleep(2)
-    return local_dataframe
+    try:
+        local_dataframe = pd.DataFrame()
+        url = "https://www.imobiliare.ro/vanzare-apartamente/{}pagina={}".format(city, page_no)
+        page_html = re.get(url)
+        page_souped = BeautifulSoup(page_html.content, 'html.parser')
+        listings = page_souped.find_all(class_="box-anunt")
+        for listing in listings:
+            apartment_dict = decode_announcement_imobiliare_beautiful(listing)
+            if apartment_dict["data_integrity"]:
+                df_dictionary = pd.DataFrame([apartment_dict])
+                local_dataframe = pd.concat([local_dataframe, df_dictionary], ignore_index=True)
+        time.sleep(0.1)
+        return local_dataframe
+    except:
+        time.sleep(0.1)
+        return run_page_beautifulsoup(city, page_no)
 
 
 if __name__ == "__main__":
